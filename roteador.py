@@ -1,6 +1,6 @@
 # Desenvolvedores
 # Bernardo Vale dos Santos Bento - 2023002065
-# 
+# Pedro Henrique Egito Aguiar - 2023002066
 
 import socket
 import sys
@@ -108,6 +108,27 @@ def enviar_vetor_todos():
         msg = montar_vetor(destino_para_vizinho=nome_viz)
         sock_viz.send(msg)
 
+def atualizar_tabela(nome_remetente, entradas):
+    """Bellman-Ford: atualiza tabela_roteamento com vetor recebido de nome_remetente."""
+    alterou = False
+    for destino, dist_anunciada in entradas:
+        if destino == my_name:
+            continue
+        nova_dist = min(dist_anunciada + 1, INFINITO)
+        if destino not in tabela_roteamento:
+            tabela_roteamento[destino] = (nome_remetente, nova_dist)
+            alterou = True
+        else:
+            proximo_atual, dist_atual = tabela_roteamento[destino]
+            if proximo_atual == nome_remetente:
+                if dist_atual != nova_dist:
+                    tabela_roteamento[destino] = (nome_remetente, nova_dist)
+                    alterou = True
+            elif nova_dist < dist_atual:
+                tabela_roteamento[destino] = (nome_remetente, nova_dist)
+                alterou = True
+    return alterou
+
 ####################################################################
 # Funções de conexão com vizinhos
 ####################################################################
@@ -127,7 +148,6 @@ def conectar_vizinho(host, porto):
 ####################################################################
 # Início do programa: aguarda a conexão do programa de controle
 ####################################################################
-print("I am here", end='', flush=True)
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 # SO_REUSEADDR evita o erro temporário "address already in use" que 
@@ -137,14 +157,12 @@ server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server_port = int(sys.argv[1])
 server_socket.bind(('', server_port))
 server_socket.listen(5)
-print(" at port", server_port, end='', flush=True)
 control, ctrl_addr = server_socket.accept()
 
 # Recebe nome do roteador
 my_name_msg = recv_exato(control, 32)
 l = unpack("!32s", my_name_msg)
 my_name = l[0].decode().rstrip('\x00')
-print(" my name is", my_name, flush=True)
 
 # Inicializa tabela com rota para si mesmo
 tabela_roteamento[my_name] = (my_name, 0)
@@ -196,14 +214,35 @@ while(True): # aguarda mensagens do comando de controle
                 msg = control.recv(32)
                 nome_vizinho = extrai_roteador(msg)
                 # 2.3: fechar socket + poison reverse — Dev 2
-                pass
+                sock_viz = vizinhos.pop(nome_vizinho, None)
+                if sock_viz:
+                    socket_to_name.pop(sock_viz, None)
+                    try:
+                        sock_viz.close()
+                    except Exception:
+                        pass
+                for destino in tabela_roteamento:
+                    proximo, dist = tabela_roteamento[destino]
+                    if proximo == nome_vizinho:
+                        tabela_roteamento[destino] = (nome_vizinho, INFINITO)
+                enviar_vetor_todos()
 
             elif comando == 'E':
                 # o roteador recebe o NOME do outro destino e o texto
                 msg = control.recv(96)
                 destino, texto = extrai_destino_texto(msg)
                 # 2.4: rotear mensagem — Dev 2
-                pass
+                if destino == my_name:
+                    print(f"R {texto}", flush=True)
+                else:
+                    if destino in tabela_roteamento:
+                        proximo, dist = tabela_roteamento[destino]
+                        if dist < INFINITO and proximo in vizinhos:
+                            print(f"E {destino} {proximo} {texto}", flush=True)
+                            msg_env = b'E' + pack("!32s64s",
+                                                  destino.encode(),
+                                                  texto.encode())
+                            vizinhos[proximo].send(msg_env)
             
             elif comando == 'T':
                 for destino, (proximo, dist) in tabela_roteamento.items():
@@ -215,19 +254,47 @@ while(True): # aguarda mensagens do comando de controle
                     disparar_dv()
 
             else:
-                print("Comando não reconhecido",flush=True)
+                pass
 
         # Mensagem de vizinho
         else:
             msg = sock.recv(1)
             if not msg:
                 # Vizinho fechou conexão — tratar na 2.7
-                pass
+                nome_caiu = socket_to_name.get(sock, None)
+                if nome_caiu:
+                    vizinhos.pop(nome_caiu, None)
+                    socket_to_name.pop(sock, None)
+                    try:
+                        sock.close()
+                    except Exception:
+                        pass
+                    for destino in tabela_roteamento:
+                        proximo, dist = tabela_roteamento[destino]
+                        if proximo == nome_caiu:
+                            tabela_roteamento[destino] = (nome_caiu, INFINITO)
+                    enviar_vetor_todos()
+                continue
             else:
                 tipo = unpack("!c", msg)[0].decode()
                 if tipo == 'V':
                     # Recebe vetor de distâncias — 2.2: Dev 2 atualiza tabela
                     nome_remetente, entradas = desmontar_vetor(sock)
+                    alterou = atualizar_tabela(nome_remetente, entradas)
+                    if alterou:
+                        enviar_vetor_todos()
                 elif tipo == 'E':
                     # Mensagem roteada chegou — 2.5: Dev 2
-                    pass
+                    dados = recv_exato(sock, 96)
+                    destino, texto = extrai_destino_texto(dados)
+                    if destino == my_name:
+                        print(f"R {texto}", flush=True)
+                    else:
+                        if destino in tabela_roteamento:
+                            proximo, dist = tabela_roteamento[destino]
+                            if dist < INFINITO and proximo in vizinhos:
+                                print(f"E {destino} {proximo} {texto}", flush=True)
+                                msg_env = b'E' + pack("!32s64s",
+                                                      destino.encode(),
+                                                      texto.encode())
+                                vizinhos[proximo].send(msg_env)
