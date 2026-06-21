@@ -213,7 +213,6 @@ while(True): # aguarda mensagens do comando de controle
                 # da sua lista de conexões
                 msg = control.recv(32)
                 nome_vizinho = extrai_roteador(msg)
-                # 2.3: fechar socket + poison reverse — Dev 2
                 sock_viz = vizinhos.pop(nome_vizinho, None)
                 if sock_viz:
                     socket_to_name.pop(sock_viz, None)
@@ -231,7 +230,7 @@ while(True): # aguarda mensagens do comando de controle
                 # o roteador recebe o NOME do outro destino e o texto
                 msg = control.recv(96)
                 destino, texto = extrai_destino_texto(msg)
-                # 2.4: rotear mensagem — Dev 2
+                # 2.4: rotear mensagem 
                 if destino == my_name:
                     print(f"R {texto}", flush=True)
                 else:
@@ -260,7 +259,7 @@ while(True): # aguarda mensagens do comando de controle
         else:
             msg = sock.recv(1)
             if not msg:
-                # Vizinho fechou conexão — tratar na 2.7
+                # Vizinho fechou conexão
                 nome_caiu = socket_to_name.get(sock, None)
                 if nome_caiu:
                     vizinhos.pop(nome_caiu, None)
@@ -278,13 +277,13 @@ while(True): # aguarda mensagens do comando de controle
             else:
                 tipo = unpack("!c", msg)[0].decode()
                 if tipo == 'V':
-                    # Recebe vetor de distâncias — 2.2: Dev 2 atualiza tabela
+                    # Recebe vetor de distâncias 
                     nome_remetente, entradas = desmontar_vetor(sock)
                     alterou = atualizar_tabela(nome_remetente, entradas)
                     if alterou:
                         enviar_vetor_todos()
                 elif tipo == 'E':
-                    # Mensagem roteada chegou — 2.5: Dev 2
+                    # Mensagem roteada chegou
                     dados = recv_exato(sock, 96)
                     destino, texto = extrai_destino_texto(dados)
                     if destino == my_name:
