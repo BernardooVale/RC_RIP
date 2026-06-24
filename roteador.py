@@ -231,7 +231,6 @@ while(True): # aguarda mensagens do comando de controle
                 # o roteador recebe o NOME do outro destino e o texto
                 msg = recv_exato(control, 96)
                 destino, texto = extrai_destino_texto(msg)
-                print(f"DEBUG E: destino='{destino}' tabela={tabela_roteamento}", flush=True)
                 # 2.4: rotear mensagem 
                 if destino == my_name:
                     print(f"R {texto}", flush=True)
