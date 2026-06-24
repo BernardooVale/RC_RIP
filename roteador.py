@@ -203,7 +203,7 @@ while(True): # aguarda mensagens do comando de controle
 
             if comando == 'C':
                 # o roteador recebe o ENDEREÇO do outro roteador ao qual se conectar
-                msg = control.recv(34) # 32s host + H porto
+                msg = recv_exato(control, 34) # 32s host + H porto
                 host, porto = extrai_endereco(msg)
                 nome_vizinho = conectar_vizinho(host, porto)
                 # Adiciona vizinho na tabela com dist=1
@@ -212,7 +212,7 @@ while(True): # aguarda mensagens do comando de controle
             elif comando == 'D':
                 # o roteador recebe o NOME do outro roteador que deve ser removido
                 # da sua lista de conexões
-                msg = control.recv(32)
+                msg = recv_exato(control, 32)
                 nome_vizinho = extrai_roteador(msg)
                 sock_viz = vizinhos.pop(nome_vizinho, None)
                 if sock_viz:
@@ -229,7 +229,7 @@ while(True): # aguarda mensagens do comando de controle
 
             elif comando == 'E':
                 # o roteador recebe o NOME do outro destino e o texto
-                msg = control.recv(96)
+                msg = recv_exato(control, 96)
                 destino, texto = extrai_destino_texto(msg)
                 # 2.4: rotear mensagem 
                 if destino == my_name:
