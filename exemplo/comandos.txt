@@ -1,8 +1,11 @@
 I
-P 5
-I
-T vulcan
+A vulcan kronos
 A kronos risa
-R terra vulcan
-E kronos vulcan Oi!
-E terra risa Alo.
+A risa terra
+P 4
+T vulcan
+E vulcan terra Chegou?
+P 2
+R kronos risa
+P 4
+T vulcan
