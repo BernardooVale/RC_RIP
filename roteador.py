@@ -104,15 +104,9 @@ def desmontar_vetor(sock):
 
 def enviar_vetor_todos():
     """Envia vetor de distâncias para todos os vizinhos (com poison reverse)."""
-    for nome_viz, sock_viz in list(vizinhos.items()):
-        try:
-            msg = montar_vetor(destino_para_vizinho=nome_viz)
-            sock_viz.send(msg)
-        except Exception:
-            # Sokcet fechado em outra trhead.
-            # o send() falhará. Ignoramos o erro aqui pois o 'select' da thread
-            # principal fará a limpeza logo em seguida.
-            pass
+    for nome_viz, sock_viz in vizinhos.items():
+        msg = montar_vetor(destino_para_vizinho=nome_viz)
+        sock_viz.send(msg)
 
 def atualizar_tabela(nome_remetente, entradas):
     """Bellman-Ford: atualiza tabela_roteamento com vetor recebido de nome_remetente."""
@@ -264,16 +258,11 @@ while(True): # aguarda mensagens do comando de controle
 
         # Mensagem de vizinho
         else:
-            try:
-                msg = sock.recv(1)
-            except (ConnectionResetError, ConnectionError):
-                msg = b'' # Trata como se o socket tivesse sido fechado
-
+            msg = sock.recv(1)
             if not msg:
-                # Vizinho fechou conexão ou resetou
+                # Vizinho fechou conexão
                 nome_caiu = socket_to_name.get(sock, None)
                 if nome_caiu:
-                    # ... [seu código de limpeza existente aqui] ...
                     vizinhos.pop(nome_caiu, None)
                     socket_to_name.pop(sock, None)
                     try:
