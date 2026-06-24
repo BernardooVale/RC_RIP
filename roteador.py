@@ -29,16 +29,16 @@ tabela_roteamento = {}
 ####################################################################
 def extrai_roteador(msg):
     r = unpack("!32s", msg)
-    return r[0].decode()
+    return r[0].decode().rstrip('\x00')
 
 def extrai_endereco(msg):
     r = unpack("!32sH", msg)
-    return r[0].decode(), r[1]
+    return r[0].decode().rstrip('\x00'), r[1]
 
 def extrai_destino_texto(msg):
     l = unpack("!32s64s", msg)
-    destino = l[0].decode()
-    texto   = l[1].decode()
+    destino = l[0].decode().rstrip('\x00')
+    texto   = l[1].decode().rstrip('\x00')
     return destino, texto
 
 dv_ativo = False  # flag: envio periódico iniciado
@@ -90,13 +90,13 @@ def desmontar_vetor(sock):
     """
     # Cabeçalho fixo: 32s nome + H num_entradas
     header = recv_exato(sock, 34)
-    nome_remetente = unpack("!32s", header[:32])[0].decode()
+    nome_remetente = unpack("!32s", header[:32])[0].decode().rstrip('\x00')
     n = unpack("!H", header[32:34])[0]
 
     entradas = []
     for _ in range(n):
         entrada = recv_exato(sock, 34)  # 32s destino + H dist
-        destino = unpack("!32s", entrada[:32])[0].decode()
+        destino = unpack("!32s", entrada[:32])[0].decode().rstrip('\x00')
         dist    = unpack("!H", entrada[32:34])[0]
         entradas.append((destino, dist))
 
@@ -140,7 +140,7 @@ def conectar_vizinho(host, porto):
     s.send(pack("!32s", my_name.encode()))
     # Recebe nome do outro lado
     nome_msg = recv_exato(s, 32)
-    nome_vizinho = unpack("!32s", nome_msg)[0].decode()
+    nome_vizinho = unpack("!32s", nome_msg)[0].decode().rstrip('\x00')
     vizinhos[nome_vizinho] = s
     socket_to_name[s] = nome_vizinho
     return nome_vizinho
@@ -162,10 +162,12 @@ control, ctrl_addr = server_socket.accept()
 # Recebe nome do roteador
 my_name_msg = recv_exato(control, 32)
 l = unpack("!32s", my_name_msg)
-my_name = l[0].decode()
+my_name = l[0].decode().rstrip('\x00')
+print(f"DEBUG nome recebido: '{my_name}'", flush=True)
 
 # Inicializa tabela com rota para si mesmo
 tabela_roteamento[my_name] = (my_name, 0)
+print("DEBUG tabela init ok", flush=True)
 
 ####################################################################
 # a partir deste ponto, certamente seu programa precisará ser alterado
@@ -175,6 +177,9 @@ tabela_roteamento[my_name] = (my_name, 0)
 ####################################################################
 
 while(True): # aguarda mensagens do comando de controle
+    
+    print("DEBUG entrando no loop", flush=True)
+    
     socks_read = [server_socket, control] + list(vizinhos.values())
     readables, _, _ = select.select(socks_read, [], [])
 
@@ -185,7 +190,7 @@ while(True): # aguarda mensagens do comando de controle
             novo_sock, addr = server_socket.accept()
             # Lado passivo: lê nome do vizinho que conectou
             nome_msg = recv_exato(novo_sock, 32)
-            nome_vizinho = unpack("!32s", nome_msg)[0].decode()
+            nome_vizinho = unpack("!32s", nome_msg)[0].decode().rstrip('\x00')
             # Responde com próprio nome
             novo_sock.send(pack("!32s", my_name.encode()))
             vizinhos[nome_vizinho] = novo_sock
