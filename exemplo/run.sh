@@ -7,4 +7,4 @@ do
     python3 ../roteador.py ${portos[i]}  &> $log &
 done 
 sleep 1
-python3 ../controle.py ../roteadores.txt < comandos.txt | tee log.controle
+python3 ../controle.py ../roteadores_locais.txt < comandos.txt | tee log.controle
