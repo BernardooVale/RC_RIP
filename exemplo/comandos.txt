@@ -2,18 +2,10 @@ I
 A vulcan kronos
 A kronos risa
 A risa terra
-A terra vulcan
-P 6
+P 4
 T vulcan
-T risa
-E vulcan risa MSG_VIA_ANEL
+E vulcan terra Chegou?
 P 2
-R vulcan kronos
-P 6
+R kronos risa
+P 4
 T vulcan
-E vulcan kronos MSG_ROTA_ALTERNATIVA
-P 2
-R risa terra
-P 6
-T terra
-E terra kronos MSG_ISOLADA
