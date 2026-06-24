@@ -58,11 +58,13 @@ def recv_exato(sock, n):
     return buf
 
 def disparar_dv():
-    """Envia DV para vizinhos e reagenda timer."""
-    if vizinhos:
-        enviar_vetor_todos()
+    try:
+        if vizinhos:
+            enviar_vetor_todos()
+    except Exception as e:
+        print(f"ERRO disparar_dv: {e}", flush=True)
     t = threading.Timer(INTERVALO_DV, disparar_dv)
-    t.daemon = True  # timer não impede encerramento do processo
+    t.daemon = True
     t.start()
 
 
