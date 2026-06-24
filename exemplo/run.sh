@@ -6,5 +6,5 @@ do
     date "+DATE: %Y-%m-%d   TIME: %H:%M:%S%n" > $log
     python3 -u ../roteador.py ${portos[i]}  &> $log &
 done 
-sleep 1 
+sleep 3 
 python3 ../controle.py ../roteadores_locais.txt < comandos.txt | tee log.controle

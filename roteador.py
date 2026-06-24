@@ -163,11 +163,9 @@ control, ctrl_addr = server_socket.accept()
 my_name_msg = recv_exato(control, 32)
 l = unpack("!32s", my_name_msg)
 my_name = l[0].decode().rstrip('\x00')
-print(f"DEBUG nome recebido: '{my_name}'", flush=True)
 
 # Inicializa tabela com rota para si mesmo
 tabela_roteamento[my_name] = (my_name, 0)
-print("DEBUG tabela init ok", flush=True)
 
 ####################################################################
 # a partir deste ponto, certamente seu programa precisará ser alterado
@@ -177,8 +175,6 @@ print("DEBUG tabela init ok", flush=True)
 ####################################################################
 
 while(True): # aguarda mensagens do comando de controle
-    
-    print("DEBUG entrando no loop", flush=True)
     
     socks_read = [server_socket, control] + list(vizinhos.values())
     readables, _, _ = select.select(socks_read, [], [])
