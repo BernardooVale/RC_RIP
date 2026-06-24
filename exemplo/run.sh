@@ -4,7 +4,7 @@ for i in 0 1 2 3
 do
     log="log.${nomes[i]}"
     date "+DATE: %Y-%m-%d   TIME: %H:%M:%S%n" > $log
-    python3 -u ../roteador.py ${portos[i]}  &> $log &
+    python3 ../esqueleto_roteador.py ${portos[i]}  &> $log &
 done 
-sleep 3 
+sleep 1
 python3 ../controle.py ../roteadores_locais.txt < comandos.txt | tee log.controle
