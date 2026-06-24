@@ -1,7 +1,10 @@
 I
 A vulcan kronos
+P 1
 A kronos risa
+P 1
 A risa terra
+P 1
 A terra vulcan
 P 6
 T vulcan
