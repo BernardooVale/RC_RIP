@@ -58,13 +58,11 @@ def recv_exato(sock, n):
     return buf
 
 def disparar_dv():
-    try:
-        if vizinhos:
-            enviar_vetor_todos()
-    except Exception as e:
-        print(f"ERRO disparar_dv: {e}", flush=True)
+    """Envia DV para vizinhos e reagenda timer."""
+    if vizinhos:
+        enviar_vetor_todos()
     t = threading.Timer(INTERVALO_DV, disparar_dv)
-    t.daemon = True
+    t.daemon = True  # timer não impede encerramento do processo
     t.start()
 
 
@@ -233,6 +231,7 @@ while(True): # aguarda mensagens do comando de controle
                 # o roteador recebe o NOME do outro destino e o texto
                 msg = recv_exato(control, 96)
                 destino, texto = extrai_destino_texto(msg)
+                print(f"DEBUG E: destino='{destino}' tabela={tabela_roteamento}", flush=True)
                 # 2.4: rotear mensagem 
                 if destino == my_name:
                     print(f"R {texto}", flush=True)
