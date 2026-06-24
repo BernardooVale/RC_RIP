@@ -264,11 +264,16 @@ while(True): # aguarda mensagens do comando de controle
 
         # Mensagem de vizinho
         else:
-            msg = sock.recv(1)
+            try:
+                msg = sock.recv(1)
+            except (ConnectionResetError, ConnectionError):
+                msg = b'' # Trata como se o socket tivesse sido fechado
+
             if not msg:
-                # Vizinho fechou conexão
+                # Vizinho fechou conexão ou resetou
                 nome_caiu = socket_to_name.get(sock, None)
                 if nome_caiu:
+                    # ... [seu código de limpeza existente aqui] ...
                     vizinhos.pop(nome_caiu, None)
                     socket_to_name.pop(sock, None)
                     try:
